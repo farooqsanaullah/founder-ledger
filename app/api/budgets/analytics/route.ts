@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
-import { budgets, budgetCategories, expenses, users, startups } from '@/lib/db/schema'
+import { budgets, budgetCategories, categories, expenses, users, startups } from '@/lib/db/schema'
 import { eq, and, gte, lte, sql } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
