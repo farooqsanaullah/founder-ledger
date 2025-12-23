@@ -36,6 +36,12 @@ export function usePermissions() {
         }
 
         const members: TeamMember[] = await response.json()
+        
+        // Handle case where members might be null/undefined
+        if (!Array.isArray(members)) {
+          throw new Error('Invalid response from team members API')
+        }
+        
         const currentUserMember = members.find(member => member.userId === user.id)
         
         if (currentUserMember) {

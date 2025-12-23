@@ -33,7 +33,7 @@ const navigation = [
   },
   {
     name: 'Investments',
-    href: '/dashboard/investments',
+    href: '/investments',
     icon: TrendingUp,
   },
   {

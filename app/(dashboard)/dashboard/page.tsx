@@ -14,13 +14,13 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-screen">
       <Header 
         title="Dashboard"
         description="Track your startup's financial health at a glance"
       />
       
-      <div className="flex-1 p-6 space-y-8">
+      <div className="flex-1 p-6 space-y-8 pb-12">
         {/* Real Metrics from Database */}
         <DashboardMetrics />
 
