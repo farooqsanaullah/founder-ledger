@@ -42,7 +42,9 @@ export default function OnboardingPage() {
       if (response.ok) {
         router.push('/dashboard')
       } else {
-        console.error('Failed to create startup')
+        const errorData = await response.json()
+        console.error('Failed to create startup:', errorData)
+        alert(`Failed to create startup: ${errorData.error}`)
       }
     } catch (error) {
       console.error('Error creating startup:', error)
