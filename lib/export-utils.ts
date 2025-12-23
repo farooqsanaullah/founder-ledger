@@ -135,7 +135,7 @@ export const exportToExcel = ({ title, data, columns, summary }: ExportData) => 
   if (summary && summary.length > 0) {
     wsData.push(['Summary'])
     summary.forEach((item) => {
-      const value = typeof item.value === 'number' ? item.value : item.value.toString()
+      const value = typeof item.value === 'number' ? item.value.toString() : item.value.toString()
       wsData.push([item.label, value])
     })
     wsData.push([''])

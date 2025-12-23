@@ -178,7 +178,7 @@ export async function GET() {
     // Get expense breakdown by category
     const categoryBreakdown = await db
       .select({
-        category: expenses.category,
+        categoryId: expenses.categoryId,
         total: sql<number>`COALESCE(SUM(CAST(${expenses.amount} AS DECIMAL)), 0)`,
         count: sql<number>`COUNT(*)`,
         avgAmount: sql<number>`COALESCE(AVG(CAST(${expenses.amount} AS DECIMAL)), 0)`,
@@ -190,7 +190,7 @@ export async function GET() {
           sql`${expenses.status} IN ('approved', 'reimbursed')`
         )
       )
-      .groupBy(expenses.category)
+      .groupBy(expenses.categoryId)
       .orderBy(sql<number>`SUM(CAST(${expenses.amount} AS DECIMAL)) DESC`)
 
     return NextResponse.json({
