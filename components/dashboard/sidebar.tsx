@@ -28,7 +28,7 @@ const navigation = [
   },
   {
     name: 'Expenses',
-    href: '/dashboard/expenses',
+    href: '/expenses',
     icon: Receipt,
   },
   {
