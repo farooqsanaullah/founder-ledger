@@ -10,7 +10,7 @@ const createAuditLogSchema = z.object({
   action: z.enum(['created', 'updated', 'deleted', 'invited', 'joined', 'left', 'role_changed', 'login', 'logout', 'export']),
   resource: z.string().min(1).max(100),
   resourceId: z.string().uuid().optional(),
-  details: z.record(z.any()).optional(),
+  details: z.record(z.string(), z.any()).optional(),
   userAgent: z.string().optional(),
   ipAddress: z.string().max(45).optional(),
 })
