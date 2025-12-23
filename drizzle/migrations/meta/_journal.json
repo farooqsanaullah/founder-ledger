@@ -8,6 +8,27 @@
       "when": 1766511086410,
       "tag": "0000_brief_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766518030933,
+      "tag": "0001_glorious_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766520006539,
+      "tag": "0002_oval_whiplash",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766521744114,
+      "tag": "0003_tough_firebird",
+      "breakpoints": true
     }
   ]
 }

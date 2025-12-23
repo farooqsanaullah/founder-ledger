@@ -48,11 +48,47 @@ export const recurrenceType = pgEnum('recurrence_type', [
   'quarterly',
   'yearly'
 ])
+export const budgetStatus = pgEnum('budget_status', [
+  'draft',
+  'active',
+  'paused',
+  'completed',
+  'cancelled'
+])
+export const budgetType = pgEnum('budget_type', [
+  'monthly',
+  'quarterly',
+  'yearly',
+  'project'
+])
+export const alertType = pgEnum('alert_type', [
+  'threshold',
+  'overspend',
+  'monthly_recap'
+])
 export const reimbursementStatus = pgEnum('reimbursement_status', [
   'pending',
   'approved',
   'paid',
   'cancelled'
+])
+export const invitationStatus = pgEnum('invitation_status', [
+  'pending',
+  'accepted',
+  'declined',
+  'expired'
+])
+export const auditAction = pgEnum('audit_action', [
+  'created',
+  'updated',
+  'deleted',
+  'invited',
+  'joined',
+  'left',
+  'role_changed',
+  'login',
+  'logout',
+  'export'
 ])
 
 // Users table (synced from Clerk)
@@ -179,11 +215,39 @@ export const currencies = pgTable('currencies', {
   decimalPlaces: integer('decimal_places').default(2),
 })
 
+// Investments
+export const investments = pgTable('investments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  startupId: uuid('startup_id').references(() => startups.id).notNull(),
+  roundName: varchar('round_name', { length: 100 }).notNull(), // e.g., "Seed", "Series A"
+  investorName: varchar('investor_name', { length: 255 }).notNull(),
+  type: investmentType('type').notNull(),
+  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).default('USD'),
+  convertedAmount: decimal('converted_amount', { precision: 15, scale: 2 }),
+  exchangeRate: decimal('exchange_rate', { precision: 10, scale: 6 }),
+  equityPercentage: decimal('equity_percentage', { precision: 5, scale: 2 }), // e.g., 10.50%
+  premoneyValuation: decimal('premoney_valuation', { precision: 15, scale: 2 }),
+  postmoneyValuation: decimal('postmoney_valuation', { precision: 15, scale: 2 }),
+  investmentDate: date('investment_date').notNull(),
+  boardSeat: boolean('board_seat').default(false),
+  leadInvestor: boolean('lead_investor').default(false),
+  preferenceMultiple: decimal('preference_multiple', { precision: 3, scale: 1 }).default('1.0'),
+  participationRights: boolean('participation_rights').default(false),
+  antiDilutionRights: varchar('anti_dilution_rights', { length: 50 }), // weighted_average, ratchet, none
+  notes: text('notes'),
+  documentUrl: text('document_url'),
+  createdById: uuid('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   startupMembers: many(startupMembers),
   expenses: many(expenses),
   paymentMethods: many(paymentMethods),
+  investmentsCreated: many(investments),
 }))
 
 export const startupsRelations = relations(startups, ({ many }) => ({
@@ -191,6 +255,7 @@ export const startupsRelations = relations(startups, ({ many }) => ({
   categories: many(categories),
   expenses: many(expenses),
   paymentMethods: many(paymentMethods),
+  investments: many(investments),
 }))
 
 export const startupMembersRelations = relations(startupMembers, ({ one }) => ({
@@ -252,6 +317,157 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
   }),
   createdBy: one(users, {
     fields: [expenses.createdById],
+    references: [users.id],
+  }),
+}))
+
+// Budget tables
+export const budgets = pgTable('budgets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  startupId: uuid('startup_id').references(() => startups.id).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  budgetType: budgetType('budget_type').notNull().default('monthly'),
+  status: budgetStatus('status').notNull().default('draft'),
+  
+  // Budget amounts
+  totalAmount: decimal('total_amount', { precision: 15, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('USD'),
+  
+  // Time period
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  
+  // Alert settings
+  alertThreshold: decimal('alert_threshold', { precision: 5, scale: 2 }).default('80'), // percentage
+  alertEmails: jsonb('alert_emails').$type<string[]>(),
+  
+  // Metadata
+  createdById: uuid('created_by_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const budgetCategories = pgTable('budget_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  budgetId: uuid('budget_id').references(() => budgets.id).notNull(),
+  categoryId: uuid('category_id').references(() => categories.id).notNull(),
+  allocatedAmount: decimal('allocated_amount', { precision: 15, scale: 2 }).notNull(),
+  description: text('description'),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const budgetAlerts = pgTable('budget_alerts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  budgetId: uuid('budget_id').references(() => budgets.id).notNull(),
+  type: alertType('type').notNull(),
+  threshold: decimal('threshold', { precision: 5, scale: 2 }), // percentage
+  isActive: boolean('is_active').notNull().default(true),
+  lastTriggered: timestamp('last_triggered'),
+  
+  // Email settings
+  recipientEmails: jsonb('recipient_emails').$type<string[]>(),
+  emailTemplate: text('email_template'),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// Relations
+export const budgetsRelations = relations(budgets, ({ one, many }) => ({
+  startup: one(startups, {
+    fields: [budgets.startupId],
+    references: [startups.id],
+  }),
+  createdBy: one(users, {
+    fields: [budgets.createdById],
+    references: [users.id],
+  }),
+  budgetCategories: many(budgetCategories),
+  budgetAlerts: many(budgetAlerts),
+}))
+
+export const budgetCategoriesRelations = relations(budgetCategories, ({ one }) => ({
+  budget: one(budgets, {
+    fields: [budgetCategories.budgetId],
+    references: [budgets.id],
+  }),
+  category: one(categories, {
+    fields: [budgetCategories.categoryId],
+    references: [categories.id],
+  }),
+}))
+
+export const budgetAlertsRelations = relations(budgetAlerts, ({ one }) => ({
+  budget: one(budgets, {
+    fields: [budgetAlerts.budgetId],
+    references: [budgets.id],
+  }),
+}))
+
+export const investmentsRelations = relations(investments, ({ one }) => ({
+  startup: one(startups, {
+    fields: [investments.startupId],
+    references: [startups.id],
+  }),
+  createdBy: one(users, {
+    fields: [investments.createdById],
+    references: [users.id],
+  }),
+}))
+
+// Team Invitations table
+export const teamInvitations = pgTable('team_invitations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  startupId: uuid('startup_id').references(() => startups.id).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  role: memberRole('role').notNull().default('member'),
+  token: varchar('token', { length: 255 }).unique().notNull(),
+  invitedBy: uuid('invited_by').references(() => users.id).notNull(),
+  status: invitationStatus('status').notNull().default('pending'),
+  expiresAt: timestamp('expires_at').notNull(),
+  acceptedAt: timestamp('accepted_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+// Audit Logs table
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  startupId: uuid('startup_id').references(() => startups.id).notNull(),
+  userId: uuid('user_id').references(() => users.id),
+  action: auditAction('action').notNull(),
+  resource: varchar('resource', { length: 100 }).notNull(),
+  resourceId: uuid('resource_id'),
+  details: jsonb('details'),
+  userEmail: varchar('user_email', { length: 255 }),
+  userAgent: text('user_agent'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
+// Team Invitations Relations
+export const teamInvitationsRelations = relations(teamInvitations, ({ one }) => ({
+  startup: one(startups, {
+    fields: [teamInvitations.startupId],
+    references: [startups.id],
+  }),
+  inviter: one(users, {
+    fields: [teamInvitations.invitedBy],
+    references: [users.id],
+  }),
+}))
+
+// Audit Logs Relations
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  startup: one(startups, {
+    fields: [auditLogs.startupId],
+    references: [startups.id],
+  }),
+  user: one(users, {
+    fields: [auditLogs.userId],
     references: [users.id],
   }),
 }))
