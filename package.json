@@ -22,6 +22,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",
     "@neondatabase/serverless": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
@@ -30,6 +31,7 @@
     "next": "^16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "recharts": "^3.6.0",
     "svix": "^1.82.0",
     "tailwind-merge": "^3.4.0"
   },
