@@ -15,13 +15,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get the current user from database
-    const user = await db.query.users.findFirst({
+    // Get the current user from database, create if doesn't exist
+    let user = await db.query.users.findFirst({
       where: eq(users.clerkId, userId),
     })
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      // Create user if they don't exist (fallback for webhook issues)
+      const [newUser] = await db.insert(users).values({
+        clerkId: userId,
+        email: 'temp@example.com', // Temporary - should be updated by webhook
+        firstName: null,
+        lastName: null,
+        avatarUrl: null,
+        phone: null,
+      }).returning()
+      user = newUser
     }
 
     const body = await request.json()
@@ -59,7 +68,12 @@ export async function POST(request: NextRequest) {
     })
 
     // Seed default categories for the startup
-    await seedStartupCategories(startup.id)
+    try {
+      await seedStartupCategories(startup.id)
+    } catch (categoryError) {
+      console.error('Error seeding categories (non-critical):', categoryError)
+      // Continue without categories for now
+    }
 
     return NextResponse.json({ 
       startup: {
