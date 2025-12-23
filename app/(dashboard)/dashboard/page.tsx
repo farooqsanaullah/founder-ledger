@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { Header } from '@/components/dashboard/header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const { userId } = await auth()
 

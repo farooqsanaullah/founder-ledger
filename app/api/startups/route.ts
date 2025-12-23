@@ -5,6 +5,8 @@ import { startups, startupMembers, users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { seedStartupCategories } from '@/lib/db/seed-startup'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
