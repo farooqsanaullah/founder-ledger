@@ -1,7 +1,11 @@
+import { config } from 'dotenv'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { neon } from '@neondatabase/serverless'
 import { currencies } from '@/lib/db/schema'
 import { defaultCurrencies } from '@/lib/seed-data'
+
+// Load environment variables
+config({ path: '.env.local' })
 
 async function main() {
   if (!process.env.DATABASE_URL) {
